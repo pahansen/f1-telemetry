@@ -12,5 +12,5 @@ Thanks to Codemasters for providing this awesome feature. You can check the foru
 [2]: https://forums.codemasters.com/topic/80231-f1-2021-udp-specification/
 
 ## Remarks
-The code shown in this project should only serve as a little playground for getting your hands on F1 2021 data in an easy way without too many dependencies on technologies for streaming data properly :-).
+The code shown in this project should only serve as a little example for getting your hands on F1 2021 data in an easy way without too many dependencies on technologies for streaming data properly :-).
 
