@@ -1,7 +1,7 @@
 # Simple Telemetry Dashboard for F1 2021
 This project shows an example of how to use the UDP data stream from [F1 2021][1] video game. It includes parsing data from binary format into Python classes, working with the data in a pandas data frame and finally visualizing this data in Plotly / Dash. Only a subset of the available data (PacketCarTelemetry) was used to produce a minimalistic dashboard:
 
-![F1 2021 Dashboard Example](https://github.com/pahansen/f1-2021-telemetry-dashboard/blob/main/DashF1.jpg?raw=true)
+![F1 2021 Dashboard Example](https://github.com/pahansen/f1-2021-telemetry-dashboard/blob/main/DashF1.JPG)
 
 Within the dash app, the "Interval" component was used to refresh data every second based on data that was buffered from the UDP stream. The example shows data, that was streamed to the dashboard during a drive on the Bahrain race circuit.
 
