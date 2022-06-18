@@ -1,7 +1,7 @@
 version: '3'
 services:
   influxdb:
-    image: influxdb:latest
+    image: influxdb:2.3.0
     ports:
       - "8086:8086"
     environment:
@@ -11,3 +11,8 @@ services:
       - DOCKER_INFLUXDB_INIT_ORG=f1
       - DOCKER_INFLUXDB_INIT_BUCKET=f1_telemetry
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=f1_telemetry_token
+
+  grafana:
+    image: grafana/grafana:8.5.6
+    ports:
+      - "3000:3000"
