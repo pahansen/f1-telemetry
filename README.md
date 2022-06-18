@@ -1,5 +1,5 @@
 # Simple Real-Time Telemetry Dashboard for F1 2021
-This project shows an example of how to use the UDP data stream from [F1 2021][1] video game to visualize real-time data. It includes parsing data from binary format into Python classes, working with the data in a pandas data frame and finally visualizing this data. Data can be streamed to either InfluxDB or Azure Data Explorer.
+This project shows an example of how to use the UDP data stream from [F1 2021][1] video game to visualize real-time data by ingesting the data into InfluxDB.
 
 Thanks to Codemasters for providing this awesome feature. You can check the forum to see all data that is available from their [F1 2021 UDP Specification][2].
 
