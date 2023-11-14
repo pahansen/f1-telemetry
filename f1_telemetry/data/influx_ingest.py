@@ -4,6 +4,16 @@ from f1_telemetry.data.udp_stream import get_udp_messages
 from datetime import datetime
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import WriteApi, WriteOptions
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+INFLUXDB_HOST = os.environ.get("INFLUXDB_HOST")
+INFLUXDB_TOKEN= os.environ.get("INFLUXDB_TOKEN")
+INFLUXDB_ORG = os.environ.get("INFLUXDB_ORG", "default")
+INFLUXDB_BUCKET = os.environ.get("INFLUXDB_BUCKET", "f1")
+
 
 
 def dict_to_influx(message_dict: dict, measurement: str, write_api: WriteApi):
@@ -23,7 +33,7 @@ def dict_to_influx(message_dict: dict, measurement: str, write_api: WriteApi):
             "time": datetime.utcnow(),
         }
     )
-    write_api.write("f1_telemetry", "f1", [point], write_precision=WritePrecision.MS)
+    write_api.write(INFLUXDB_BUCKET, INFLUXDB_ORG, [point], write_precision=WritePrecision.MS)
 
 
 def run_f1_telemetry_influx() -> None:
@@ -33,7 +43,7 @@ def run_f1_telemetry_influx() -> None:
         db_selection (str): Selected db for ingest either influx or adx.
     """
     client = InfluxDBClient(
-        url="http://localhost:8086", token="f1_telemetry_token", org="f1_telemetry"
+        url=INFLUXDB_HOST, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG
     )
     write_api = client.write_api(write_options=WriteOptions(flush_interval=200))
     for player_data, message_type in get_udp_messages():
