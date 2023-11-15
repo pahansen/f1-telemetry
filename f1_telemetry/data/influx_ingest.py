@@ -46,5 +46,6 @@ def run_f1_telemetry_influx() -> None:
         url=INFLUXDB_HOST, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG
     )
     write_api = client.write_api(write_options=WriteOptions(flush_interval=200))
-    for player_data, message_type in get_udp_messages():
-        dict_to_influx(player_data, message_type, write_api)
+    for data in get_udp_messages():
+        print(data)
+        #dict_to_influx(player_data, message_type, write_api)
