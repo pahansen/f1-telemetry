@@ -436,3 +436,58 @@ def parse_packet_car_telemetry_data(data):
     }
 
     return packet_car_telemetry_data_dict
+
+## CAR STATUS DATA
+CAR_STATUS_DATA_FORMAT = "BBBBBfffHHBBHBBBbfffBfffB"
+PACKET_CAR_STATUS_DATA_FORMAT = PACKET_HEADER_DATA_FORMAT + (CAR_STATUS_DATA_FORMAT * 22)
+
+def parse_car_status_data(unpacked_data):
+    car_status_data_dict = {
+        "m_tractionControl": unpacked_data[0],
+        "m_antiLockBrakes": unpacked_data[1],
+        "m_fuelMix": unpacked_data[2],
+        "m_frontBrakeBias": unpacked_data[3],
+        "m_pitLimiterStatus": unpacked_data[4],
+        "m_fuelInTank": unpacked_data[5],
+        "m_fuelCapacity": unpacked_data[6],
+        "m_fuelRemainingLaps": unpacked_data[7],
+        "m_maxRPM": unpacked_data[8],
+        "m_idleRPM": unpacked_data[9],
+        "m_maxGears": unpacked_data[10],
+        "m_drsAllowed": unpacked_data[11],
+        "m_drsActivationDistance": unpacked_data[12],
+        "m_actualTyreCompound": unpacked_data[13],
+        "m_visualTyreCompound": unpacked_data[14],
+        "m_tyresAgeLaps": unpacked_data[15],
+        "m_vehicleFiaFlags": unpacked_data[16],
+        "m_enginePowerICE": unpacked_data[17],
+        "m_enginePowerMGUK": unpacked_data[18],
+        "m_ersStoreEnergy": unpacked_data[19],
+        "m_ersDeployMode": unpacked_data[20],
+        "m_ersHarvestedThisLapMGUK": unpacked_data[21],
+        "m_ersHarvestedThisLapMGUH": unpacked_data[22],
+        "m_ersDeployedThisLap": unpacked_data[23],
+        "m_networkPaused": unpacked_data[24],
+    }
+    
+    return car_status_data_dict
+
+
+def parse_packet_car_status_data(data):
+    unpacked_data = struct.unpack_from(PACKET_CAR_STATUS_DATA_FORMAT, data)
+    header_dict = parse_packet_header(unpacked_data[0:HEADER_SIZE], True)
+    car_status_data_start = HEADER_SIZE
+
+    car_status_data_array = []
+    for i in range(22):  # Assuming '22' is the number of cars
+        start_index = car_status_data_start + (i * len(CAR_STATUS_DATA_FORMAT))
+        end_index = start_index + len(CAR_STATUS_DATA_FORMAT)
+        car_status_data = unpacked_data[start_index:end_index]
+        car_status_data_array.append(parse_car_status_data(car_status_data))
+
+    packet_car_status_data_dict = {
+        "m_header": header_dict,
+        "m_carStatusData": car_status_data_array,
+    }
+
+    return packet_car_status_data_dict
