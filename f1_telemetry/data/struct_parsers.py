@@ -491,3 +491,120 @@ def parse_packet_car_status_data(data):
     }
 
     return packet_car_status_data_dict
+
+## CAR DAMAGE DATA
+CAR_DAMAGE_DATA_FORMAT = "ffffBBBBBBBBBBBBBBBBBBBBBBBBBB"
+PACKET_CAR_DAMAGE_DATA_FORMAT = PACKET_HEADER_DATA_FORMAT + (CAR_DAMAGE_DATA_FORMAT * 22)
+
+def parse_car_damage_data(unpacked_data):
+    car_damage_data_dict = {
+        "m_tyresWearRL": unpacked_data[0],
+        "m_tyresWearRR": unpacked_data[1],
+        "m_tyresWearFL": unpacked_data[2],
+        "m_tyresWearFR": unpacked_data[3],
+        "m_tyresDamageRL": unpacked_data[4],
+        "m_tyresDamageRR": unpacked_data[5],
+        "m_tyresDamageFL": unpacked_data[6],
+        "m_tyresDamageFR": unpacked_data[7],
+        "m_brakesDamageRL": unpacked_data[8],
+        "m_brakesDamageRR": unpacked_data[9],
+        "m_brakesDamageFL": unpacked_data[10],
+        "m_brakesDamageFR": unpacked_data[11],
+        "m_frontLeftWingDamage": unpacked_data[12],
+        "m_frontRightWingDamage": unpacked_data[13],
+        "m_rearWingDamage": unpacked_data[14],
+        "m_floorDamage": unpacked_data[15],
+        "m_diffuserDamage": unpacked_data[16],
+        "m_sidepodDamage": unpacked_data[17],
+        "m_drsFault": unpacked_data[18],
+        "m_ersFault": unpacked_data[19],
+        "m_gearBoxDamage": unpacked_data[20],
+        "m_engineDamage": unpacked_data[21],
+        "m_engineMGUHWear": unpacked_data[22],
+        "m_engineESWear": unpacked_data[23],
+        "m_engineCEWear": unpacked_data[24],
+        "m_engineICEWear": unpacked_data[25],
+        "m_engineMGUKWear": unpacked_data[26],
+        "m_engineTCWear": unpacked_data[27],
+        "m_engineBlown": unpacked_data[28],
+        "m_engineSeized": unpacked_data[29],
+    }
+    
+    return car_damage_data_dict
+
+
+def parse_packet_car_damage_data(data):
+    unpacked_data = struct.unpack_from(PACKET_CAR_DAMAGE_DATA_FORMAT, data)
+    header_dict = parse_packet_header(unpacked_data[0:HEADER_SIZE], True)
+    car_damage_data_start = HEADER_SIZE
+
+    car_damage_data_array = []
+    for i in range(22):  # Assuming '22' is the number of cars
+        start_index = car_damage_data_start + (i * len(CAR_DAMAGE_DATA_FORMAT))
+        end_index = start_index + len(CAR_DAMAGE_DATA_FORMAT)
+        car_damage_data = unpacked_data[start_index:end_index]
+        car_damage_data_array.append(parse_car_damage_data(car_damage_data))
+
+    packet_car_damage_data_dict = {
+        "m_header": header_dict,
+        "m_carDamageData": car_damage_data_array,
+    }
+
+    return packet_car_damage_data_dict
+
+## SESSION HISTORY DATA
+# LAP_HISTORY_DATA_FORMAT = "IHBHBHBB"
+# TYRE_STINT_HISTORY_DATA_FORMAT = "BBB"
+# PACKET_SESSION_HISTORY_DATA_FORMAT = PACKET_HEADER_DATA_FORMAT + "BBBBBBB" + (LAP_HISTORY_DATA_FORMAT * 100) + (TYRE_STINT_HISTORY_DATA_FORMAT * 8)
+
+# def parse_lap_history_data(unpacked_data):
+#     return {
+#         "m_lapTimeInMS": unpacked_data[0],
+#         "m_sector1TimeInMS": unpacked_data[1],
+#         "m_sector1TimeMinutes": unpacked_data[2],
+#         "m_sector2TimeInMS": unpacked_data[3],
+#         "m_sector2TimeMinutes": unpacked_data[4],
+#         "m_sector3TimeInMS": unpacked_data[5],
+#         "m_sector3TimeMinutes": unpacked_data[6],
+#         "m_lapValidBitFlags": unpacked_data[7],
+#     }
+
+# def parse_tyre_stint_history_data(unpacked_data):
+#     return {
+#         "m_endLap": unpacked_data[0],
+#         "m_tyreActualCompound": unpacked_data[1],
+#         "m_tyreVisualCompound": unpacked_data[2],
+#     }
+
+
+# def parse_packet_session_history_data(data):
+#     unpacked_data = struct.unpack_from(PACKET_SESSION_HISTORY_DATA_FORMAT, data)
+#     header_dict = parse_packet_header(unpacked_data[0:HEADER_SIZE], True)
+    
+#     index_offset = HEADER_SIZE
+#     car_idx_offset = index_offset + (22 * len(LAP_HISTORY_DATA_FORMAT))  # Offset to carIdx data point
+
+#     lap_history_data_array = [
+#         parse_lap_history_data(unpacked_data[index_offset + (i * len(LAP_HISTORY_DATA_FORMAT)):index_offset + ((i + 1) * len(LAP_HISTORY_DATA_FORMAT))])
+#         for i in range(100)  # Assuming there are 100 laps per race
+#     ]
+
+#     tyre_stints_history_data_array = [
+#         parse_tyre_stint_history_data(unpacked_data[index_offset + len((LAP_HISTORY_DATA_FORMAT * 100)) + (i * len(TYRE_STINT_HISTORY_DATA_FORMAT)):car_idx_offset + len((LAP_HISTORY_DATA_FORMAT * 100)) + ((i + 1) * len(TYRE_STINT_HISTORY_DATA_FORMAT))])
+#         for i in range(8)
+#     ]
+
+#     packet_session_history_data_dict = {
+#         "m_header": header_dict,
+#         "m_carIdx": unpacked_data[index_offset + 1],
+#         "m_numLaps": unpacked_data[index_offset + 2],
+#         "m_numTyreStints": unpacked_data[index_offset + 3],
+#         "m_bestLapTimeLapNum": unpacked_data[index_offset + 4],
+#         "m_bestSector1LapNum": unpacked_data[index_offset + 5],
+#         "m_bestSector2LapNum": unpacked_data[index_offset + 6],
+#         "m_bestSector3LapNum": unpacked_data[index_offset + 7],
+#         "m_lapHistoryData": lap_history_data_array,
+#         "m_tyreStintsHistoryData": tyre_stints_history_data_array,
+#     }
+
+#     return packet_session_history_data_dict
