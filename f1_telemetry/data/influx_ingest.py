@@ -47,5 +47,5 @@ def run_f1_telemetry_influx() -> None:
     )
     write_api = client.write_api(write_options=WriteOptions(flush_interval=200))
     for data in get_udp_messages():
-        print(data)
+        skip = False
         #dict_to_influx(player_data, message_type, write_api)

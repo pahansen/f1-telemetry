@@ -26,7 +26,10 @@ def get_udp_messages() -> dict:
         # }
         packet_ids = {
             0: parse_packet_motion_data,
-            1: parse_packet_session_data
+            1: parse_packet_session_data,
+            2: parse_packet_lap_data,
+            4: parse_packet_participants_data,
+            5: parse_packet_car_setup_data
         }
         parser = packet_ids.get(packet_header["m_packetId"])
         if parser is not None:

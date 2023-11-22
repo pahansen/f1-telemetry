@@ -3,7 +3,9 @@ F1 2023 data format.
 """
 import struct
 
+## PACKET HEADER
 PACKET_HEADER_DATA_FORMAT = "<HBBBBBQfLLBB"
+HEADER_SIZE = 12
 
 def parse_packet_header(data, is_unpacked=False):
     # Define the format string based on the struct members
@@ -32,6 +34,10 @@ def parse_packet_header(data, is_unpacked=False):
     
     return packet_header_dict
 
+## CAR MOTION DATA
+CAR_MOTION_DATA_FORMAT = "ffffffhhhhhhffffff"
+PACKET_MOTION_DATA_FORMAT = PACKET_HEADER_DATA_FORMAT + (CAR_MOTION_DATA_FORMAT * 22)
+
 def parse_car_motion_data(unpacked_data):
     car_motion_data_dict = {
         "m_worldPositionX": unpacked_data[0],
@@ -56,8 +62,6 @@ def parse_car_motion_data(unpacked_data):
     
     return car_motion_data_dict
 
-CAR_MOTION_DATA_FORMAT = "ffffffhhhhhhffffff"
-PACKET_MOTION_DATA_FORMAT = PACKET_HEADER_DATA_FORMAT + (CAR_MOTION_DATA_FORMAT * 22)
 
 def parse_packet_motion_data(data):
     # Unpack the binary data using the format string for PacketMotionData
@@ -82,6 +86,7 @@ def parse_packet_motion_data(data):
     
     return packet_motion_data_dict
 
+## SESSION DATA
 MARSHAL_ZONE_FORMAT = "fb"
 WEATHER_FORECAST_SAMPLE_FORMAT="BBBbbbbB"
 packet_session_data_format = (
@@ -198,3 +203,169 @@ def parse_packet_session_data(data):
     }
     
     return packet_session_data_dict
+
+## LAP DATA
+LAP_DATA_FORMAT = "IIHBHBHHfffBBBBBBBBBBBBBBBHHB"
+
+def parse_lap_data(unpacked_data):
+    lap_data_dict = {
+        "m_lastLapTimeInMS": unpacked_data[0],
+        "m_currentLapTimeInMS": unpacked_data[1],
+        "m_sector1TimeInMS": unpacked_data[2],
+        "m_sector1TimeMinutes": unpacked_data[3],
+        "m_sector2TimeInMS": unpacked_data[4],
+        "m_sector2TimeMinutes": unpacked_data[5],
+        "m_deltaToCarInFrontInMS": unpacked_data[6],
+        "m_deltaToRaceLeaderInMS": unpacked_data[7],
+        "m_lapDistance": unpacked_data[8],
+        "m_totalDistance": unpacked_data[9],
+        "m_safetyCarDelta": unpacked_data[10],
+        "m_carPosition": unpacked_data[11],
+        "m_currentLapNum": unpacked_data[12],
+        "m_pitStatus": unpacked_data[13],
+        "m_numPitStops": unpacked_data[14],
+        "m_sector": unpacked_data[15],
+        "m_currentLapInvalid": unpacked_data[16],
+        "m_penalties": unpacked_data[17],
+        "m_totalWarnings": unpacked_data[18],
+        "m_cornerCuttingWarnings": unpacked_data[19],
+        "m_numUnservedDriveThroughPens": unpacked_data[20],
+        "m_numUnservedStopGoPens": unpacked_data[21],
+        "m_gridPosition": unpacked_data[22],
+        "m_driverStatus": unpacked_data[23],
+        "m_resultStatus": unpacked_data[24],
+        "m_pitLaneTimerActive": unpacked_data[25],
+        "m_pitLaneTimeInLaneInMS": unpacked_data[26],
+        "m_pitStopTimerInMS": unpacked_data[27],
+        "m_pitStopShouldServePen": unpacked_data[28],
+    }
+    
+    return lap_data_dict
+
+PACKET_LAP_DATA_FORMAT = PACKET_HEADER_DATA_FORMAT + (LAP_DATA_FORMAT * 22) + "BB"
+
+def parse_packet_lap_data(data):
+    unpacked_data = struct.unpack_from(PACKET_LAP_DATA_FORMAT, data)
+    header_dict = parse_packet_header(unpacked_data[0:HEADER_SIZE], True)
+    
+    unpacked_lap_data = unpacked_data[HEADER_SIZE:]
+    lap_data_array = []
+    
+    # Parse each LapData in the packet
+    for i in range(22):
+        start = i * len(LAP_DATA_FORMAT)
+        end = (i + 1) * len(LAP_DATA_FORMAT)
+        lap_data_array.append(parse_lap_data(unpacked_lap_data[start:end]))
+
+    # Create a dictionary with the header and LapData array
+    packet_lap_data_dict = {
+        "m_header": header_dict,
+        "m_lapData": lap_data_array,
+        "m_timeTrialPBCarIdx": unpacked_data[-2],
+        "m_timeTrialRivalCarIdx": unpacked_data[-1],
+    }
+    
+    return packet_lap_data_dict
+
+## PARTICIPANT DATA
+PARTICIPANT_DATA_FORMAT = "BBBBBBB48sBBB"
+PACKET_PARTICIPANTS_DATA_FORMAT = PACKET_HEADER_DATA_FORMAT + "B" + (PARTICIPANT_DATA_FORMAT * 22)
+# 1 + 1 + 1 + 1 + 1 + 1 + 1 + 48s + 1 + 1 + 1 = 58 bytes per ParticipantData
+
+def parse_participant_data(unpacked_data):
+    name_utf8 = unpacked_data[7].decode('utf-8').rstrip('\x00')  # Decode UTF-8 and trim nulls
+    if len(name_utf8) > 48:
+        name_utf8 = name_utf8[:48]  # Ensure it's not longer than 48 characters
+
+    participant_data_dict = {
+        "m_aiControlled": unpacked_data[0],
+        "m_driverId": unpacked_data[1],
+        "m_networkId": unpacked_data[2],
+        "m_teamId": unpacked_data[3],
+        "m_myTeam": unpacked_data[4],
+        "m_raceNumber": unpacked_data[5],
+        "m_nationality": unpacked_data[6],
+        "m_name": name_utf8,
+        "m_yourTelemetry": unpacked_data[8],
+        "m_showOnlineNames": unpacked_data[9],
+        "m_platform": unpacked_data[10],
+    }
+    
+    return participant_data_dict
+
+
+def parse_packet_participants_data(data):
+    unpacked_data = struct.unpack_from(PACKET_PARTICIPANTS_DATA_FORMAT, data)
+    header_dict = parse_packet_header(unpacked_data[0:HEADER_SIZE], True)
+    
+    unpacked_participants_data = unpacked_data[HEADER_SIZE+1:]  # Skip numActiveCars field for now
+    
+    participants_data_array = []
+    
+    for i in range(22): # Assuming '22' is the maximum number of participants
+        start = i * (len(PARTICIPANT_DATA_FORMAT) - 2) # reduce by two because of the 48s char array
+        end = (i + 1) * (len(PARTICIPANT_DATA_FORMAT) - 2) # reduce by two because of the 48s char array
+        participants_data_array.append(parse_participant_data(unpacked_participants_data[start:end]))
+
+    packet_participants_data_dict = {
+        "m_header": header_dict,
+        "m_numActiveCars": unpacked_data[HEADER_SIZE],  # Positioned before the participant data array starts
+        "m_participants": participants_data_array,
+    }
+    
+    return packet_participants_data_dict
+
+## CAR SETUPS DATA
+CAR_SETUP_DATA_FORMAT = "BBBBffffBBBBBBBBffffBf"
+PACKET_CAR_SETUP_DATA_FORMAT = PACKET_HEADER_DATA_FORMAT + (CAR_SETUP_DATA_FORMAT * 22)
+# '22' is the maximum number of car setup data we expect
+
+def parse_car_setup_data(unpacked_data):
+    car_setup_data_dict = {
+        "m_frontWing": unpacked_data[0],
+        "m_rearWing": unpacked_data[1],
+        "m_onThrottle": unpacked_data[2],
+        "m_offThrottle": unpacked_data[3],
+        "m_frontCamber": unpacked_data[4],
+        "m_rearCamber": unpacked_data[5],
+        "m_frontToe": unpacked_data[6],
+        "m_rearToe": unpacked_data[7],
+        "m_frontSuspension": unpacked_data[8],
+        "m_rearSuspension": unpacked_data[9],
+        "m_frontAntiRollBar": unpacked_data[10],
+        "m_rearAntiRollBar": unpacked_data[11],
+        "m_frontSuspensionHeight": unpacked_data[12],
+        "m_rearSuspensionHeight": unpacked_data[13],
+        "m_brakePressure": unpacked_data[14],
+        "m_brakeBias": unpacked_data[15],
+        "m_rearLeftTyrePressure": unpacked_data[16],
+        "m_rearRightTyrePressure": unpacked_data[17],
+        "m_frontLeftTyrePressure": unpacked_data[18],
+        "m_frontRightTyrePressure": unpacked_data[19],
+        "m_ballast": unpacked_data[20],
+        "m_fuelLoad": unpacked_data[21],
+    }
+    
+    return car_setup_data_dict
+
+
+def parse_packet_car_setup_data(data):
+    unpacked_data = struct.unpack_from(PACKET_CAR_SETUP_DATA_FORMAT, data)
+    header_dict = parse_packet_header(unpacked_data[0:HEADER_SIZE], True)
+    
+    car_setups_array = []
+    # Find offset where car setups data starts
+    car_setups_data_start = HEADER_SIZE
+
+    for i in range(22):  # Loop over each car setup
+        start_index = car_setups_data_start + (i * len(CAR_SETUP_DATA_FORMAT))
+        end_index = start_index + len(CAR_SETUP_DATA_FORMAT)
+        car_setup_data = unpacked_data[start_index:end_index]
+        car_setups_array.append(parse_car_setup_data(car_setup_data))
+
+    packet_car_setup_data_dict = {
+        "m_header": header_dict,
+        "m_carSetups": car_setups_array,
+    }
+    
+    return packet_car_setup_data_dict
