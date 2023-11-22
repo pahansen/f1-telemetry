@@ -17,13 +17,7 @@ def get_udp_messages() -> dict:
     while True:
         message, _ = f1_udp_socket.recvfrom(2048)
         packet_header = parse_packet_header(message)
-        #packet_header = PacketHeader.from_binary(message)
-        # packet_ids = {
-        #     2: (PacketLapData, "lap"),
-        #     6: (PacketCarTelemetryData, "car_telemetry"),
-        #     7: (PacketCarStatusData, "car_status"),
-        #     10: (PacketCarDamageData, "car_damage"),
-        # }
+   
         packet_ids = {
             0: parse_packet_motion_data,
             1: parse_packet_session_data,
@@ -32,15 +26,10 @@ def get_udp_messages() -> dict:
             5: parse_packet_car_setup_data,
             6: parse_packet_car_telemetry_data,
             7: parse_packet_car_status_data,
-            10: parse_packet_car_damage_data,
-            11: parse_packet_session_history_data
+            10: parse_packet_car_damage_data
+            #11: parse_packet_session_history_data
         }
         parser = packet_ids.get(packet_header["m_packetId"])
         if parser is not None:
             packet_data = parser(message)
             yield packet_data
-
-        #    if packet is not None:
-        #     packet_data = packet[0].from_binary(packet_header, message)
-        #     player_data = packet_data.get_player_car_data()
-        #     yield (player_data, packet[1])
