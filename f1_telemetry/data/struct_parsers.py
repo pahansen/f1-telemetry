@@ -369,3 +369,70 @@ def parse_packet_car_setup_data(data):
     }
     
     return packet_car_setup_data_dict
+
+## CAR TELEMETRY DATA
+CAR_TELEMETRY_DATA_FORMAT = "HfffBbHBBHHHHHBBBBBBBBHffffBBBB"
+# 'H' for uint16, 'f' for float, 'b' for int8 and 'B' for uint8
+PACKET_CAR_TELEMETRY_DATA_FORMAT = PACKET_HEADER_DATA_FORMAT + (CAR_TELEMETRY_DATA_FORMAT * 22) + "BBb"
+
+def parse_car_telemetry_data(unpacked_data):
+    car_telemetry_data_dict = {
+        "m_speed": unpacked_data[0],
+        "m_throttle": unpacked_data[1],
+        "m_steer": unpacked_data[2],
+        "m_brake": unpacked_data[3],
+        "m_clutch": unpacked_data[4],
+        "m_gear": unpacked_data[5],
+        "m_engineRPM": unpacked_data[6],
+        "m_drs": unpacked_data[7],
+        "m_revLightsPercent": unpacked_data[8],
+        "m_revLightsBitValue": unpacked_data[9],
+        "m_brakesTemperatureRL": unpacked_data[10],
+        "m_brakesTemperatureRR": unpacked_data[11],
+        "m_brakesTemperatureFL": unpacked_data[12],
+        "m_brakesTemperatureFR": unpacked_data[13],
+        "m_tyresSurfaceTemperatureRL": unpacked_data[14],
+        "m_tyresSurfaceTemperatureRR": unpacked_data[15],
+        "m_tyresSurfaceTemperatureFL": unpacked_data[16],
+        "m_tyresSurfaceTemperatureFR": unpacked_data[17],
+        "m_tyresInnerTemperatureRL": unpacked_data[18],
+        "m_tyresInnerTemperatureRR": unpacked_data[19],
+        "m_tyresInnerTemperatureFL": unpacked_data[20],
+        "m_tyresInnerTemperatureFR": unpacked_data[21],
+        "m_engineTemperature": unpacked_data[22],
+        "m_tyresPressureRL": unpacked_data[23],
+        "m_tyresPressureRR": unpacked_data[24],
+        "m_tyresPressureFL": unpacked_data[25],
+        "m_tyresPressureFR": unpacked_data[26],
+        "m_surfaceTypeRL": unpacked_data[27],
+        "m_surfaceTypeRR": unpacked_data[28],
+        "m_surfaceTypeFL": unpacked_data[29],
+        "m_surfaceTypeFR": unpacked_data[30],
+    }
+    
+    return car_telemetry_data_dict
+
+
+def parse_packet_car_telemetry_data(data):
+    unpacked_data = struct.unpack_from(PACKET_CAR_TELEMETRY_DATA_FORMAT, data)
+    header_dict = parse_packet_header(unpacked_data[0:HEADER_SIZE], True)
+    car_telemetry_data_start = HEADER_SIZE
+
+    car_telemetry_data_array = []
+    for i in range(22):  # Assuming '22' is the number of cars
+        start_index = car_telemetry_data_start + (i * len(CAR_TELEMETRY_DATA_FORMAT))
+        end_index = start_index + len(CAR_TELEMETRY_DATA_FORMAT)
+        car_telemetry_data = unpacked_data[start_index:end_index]
+        car_telemetry_data_array.append(parse_car_telemetry_data(car_telemetry_data))
+
+    # The indices for these fields are after all carTelemetryData structs
+    mfd_panel_index_idx = HEADER_SIZE + (len(CAR_TELEMETRY_DATA_FORMAT) * 22)
+    packet_car_telemetry_data_dict = {
+        "m_header": header_dict,
+        "m_carTelemetryData": car_telemetry_data_array,
+        "m_mfdPanelIndex": unpacked_data[mfd_panel_index_idx],
+        "m_mfdPanelIndexSecondaryPlayer": unpacked_data[mfd_panel_index_idx + 1],
+        "m_suggestedGear": unpacked_data[mfd_panel_index_idx + 2],
+    }
+
+    return packet_car_telemetry_data_dict
