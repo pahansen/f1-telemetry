@@ -37,7 +37,7 @@ def run_f1_telemetry_ingest() -> None:
     verify_mongodb_setup()
     for data in get_udp_messages():
         data["m_header"]["m_sessionUID"] = str(data["m_header"]["m_sessionUID"])
-        data["_ingested_at"] = datetime.now()
+        data["_ingested_at"] = datetime.utcnow()
         packet_ids = {
             0: "motion",
             1: "session",
