@@ -4,6 +4,7 @@ from f1_telemetry.data.udp_stream import get_udp_messages
 from dotenv import load_dotenv
 import os
 from pymongo.mongo_client import MongoClient
+from datetime import datetime
 
 load_dotenv()
 
@@ -36,6 +37,7 @@ def run_f1_telemetry_ingest() -> None:
     verify_mongodb_setup()
     for data in get_udp_messages():
         data["m_header"]["m_sessionUID"] = str(data["m_header"]["m_sessionUID"])
+        data["_ingested_at"] = datetime.now()
         packet_ids = {
             0: "motion",
             1: "session",
