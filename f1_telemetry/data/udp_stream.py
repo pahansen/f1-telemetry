@@ -2,6 +2,13 @@
 import socket
 from f1_telemetry.data.struct_parsers import *
 from f1_telemetry.config import F1_UDP_SERVER_ADDRESS, F1_UDP_SERVER_PORT
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+F1_UDP_SERVER_ADDRESS = str(os.environ.get("F1_UDP_SERVER_ADDRESS", "127.0.0.1"))
+F1_UDP_SERVER_PORT = int(os.environ.get("F1_UDP_SERVER_PORT", 20777))
 
 
 def get_udp_messages() -> dict:
@@ -17,7 +24,7 @@ def get_udp_messages() -> dict:
     while True:
         message, _ = f1_udp_socket.recvfrom(2048)
         packet_header = parse_packet_header(message)
-   
+
         packet_ids = {
             0: parse_packet_motion_data,
             1: parse_packet_session_data,
@@ -26,8 +33,7 @@ def get_udp_messages() -> dict:
             5: parse_packet_car_setup_data,
             6: parse_packet_car_telemetry_data,
             7: parse_packet_car_status_data,
-            10: parse_packet_car_damage_data
-            #11: parse_packet_session_history_data
+            10: parse_packet_car_damage_data,
         }
         parser = packet_ids.get(packet_header["m_packetId"])
         if parser is not None:

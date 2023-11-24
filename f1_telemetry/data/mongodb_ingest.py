@@ -12,10 +12,13 @@ MONGODB_CONNECTION_STRING = os.environ.get("MONGODB_CONNECTION_STRING")
 
 mongo_client = MongoClient(MONGODB_CONNECTION_STRING)
 
+
 def verify_mongodb_setup() -> None:
     """Verify that db and collections exist in mongodb.
-    If they don't exist, create them.
+    If they don't exist, they will be created.
     """
+    if not MONGODB_CONNECTION_STRING:
+        raise ValueError("MONGODB_CONNECTION_STRING is missing.")
     db = mongo_client.f1
     collections = [
         "car_telemetry",
@@ -31,9 +34,9 @@ def verify_mongodb_setup() -> None:
         if collection not in db.list_collection_names():
             db.create_collection(collection)
 
+
 def run_f1_telemetry_ingest() -> None:
-    """Run F1 telemetry ingestion.
-    """
+    """Run F1 telemetry ingestion."""
     verify_mongodb_setup()
     for data in get_udp_messages():
         data["m_header"]["m_sessionUID"] = str(data["m_header"]["m_sessionUID"])
@@ -46,7 +49,7 @@ def run_f1_telemetry_ingest() -> None:
             5: "car_setup",
             6: "car_telemetry",
             7: "car_status",
-            10: "car_damage"
+            10: "car_damage",
         }
         message_type = packet_ids.get(data["m_header"]["m_packetId"], None)
         if message_type is not None:
