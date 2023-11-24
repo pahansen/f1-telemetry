@@ -1,7 +1,6 @@
 """Handle F1 UDP stream and write data to influx."""
 import socket
 from f1_telemetry.data.struct_parsers import *
-from f1_telemetry.config import F1_UDP_SERVER_ADDRESS, F1_UDP_SERVER_PORT
 from dotenv import load_dotenv
 import os
 
