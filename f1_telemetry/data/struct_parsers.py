@@ -580,3 +580,87 @@ def parse_packet_car_damage_data(data):
     }
 
     return packet_car_damage_data_dict
+
+## FINAL CLASSIFICATION DATA
+FINAL_CLASSIFICATION_DATA_FORMAT = "BBBBBBIdBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+PACKET_FINAL_CLASSIFICATION_DATA_FORMAT = PACKET_HEADER_DATA_FORMAT + "B" + FINAL_CLASSIFICATION_DATA_FORMAT * 22
+
+def parse_final_classification_data(unpacked_data):
+    final_classification_data_dict = {
+        "m_position": unpacked_data[0],
+        "m_numLaps": unpacked_data[1],
+        "m_gridPosition": unpacked_data[2],
+        "m_points": unpacked_data[3],
+        "m_numPitStops": unpacked_data[4],
+        "m_resultStatus": unpacked_data[5],
+        "m_bestLapTimeInMS": unpacked_data[6],
+        "m_totalRaceTime": unpacked_data[7],
+        "m_penaltiesTime": unpacked_data[8],
+        "m_numPenalties": unpacked_data[9],
+        "m_numTyreStints": unpacked_data[10],
+        "m_tyreStintsActual": list(unpacked_data[11:19]),
+        "m_tyreStintsVisual": list(unpacked_data[19:27]),
+        "m_tyreStintsEndLaps": list(unpacked_data[27:35]),
+    }
+
+    return final_classification_data_dict
+
+def parse_packet_final_classification_data(data):
+    unpacked_data = struct.unpack_from(PACKET_FINAL_CLASSIFICATION_DATA_FORMAT, data)
+    header_dict = parse_packet_header(unpacked_data[:HEADER_SIZE], True)
+    final_classification_data_start = HEADER_SIZE + 1
+
+    classification_data_array = []
+    for i in range(22):
+        start_index = final_classification_data_start + (i * len(FINAL_CLASSIFICATION_DATA_FORMAT))
+        end_index = start_index + len(FINAL_CLASSIFICATION_DATA_FORMAT)
+        classification_data = unpacked_data[start_index:end_index]
+        classification_data_array.append(parse_final_classification_data(classification_data))
+
+    packet_final_classification_data_dict = {
+        "m_header": header_dict,
+        "m_numCars": unpacked_data[12],
+        "m_classificationData": classification_data_array,
+    }
+
+    return packet_final_classification_data_dict
+
+## TYRE SETS DATA
+TYRE_SET_DATA_FORMAT = "BBBBBBBhB"
+PACKET_TYRE_SETS_DATA_FORMAT = PACKET_HEADER_DATA_FORMAT + "B" + TYRE_SET_DATA_FORMAT * 20 + "B"
+
+def parse_tyre_set_data(unpacked_data):
+    tyre_set_data_dict = {
+        "m_actualTyreCompound": unpacked_data[0],
+        "m_visualTyreCompound": unpacked_data[1],
+        "m_wear": unpacked_data[2],
+        "m_available": unpacked_data[3],
+        "m_recommendedSession": unpacked_data[4],
+        "m_lifeSpan": unpacked_data[5],
+        "m_usableLife": unpacked_data[6],
+        "m_lapDeltaTime": unpacked_data[7],
+        "m_fitted": unpacked_data[8],
+    }
+
+    return tyre_set_data_dict
+
+def parse_packet_tyre_sets_data(data):
+    unpacked_data = struct.unpack_from(PACKET_TYRE_SETS_DATA_FORMAT, data)
+    header_dict = parse_packet_header(unpacked_data[:HEADER_SIZE], True)
+    tyre_sets_data_start = HEADER_SIZE + 1
+
+    tyre_sets_data_array = []
+    for i in range(20):
+        start_index = tyre_sets_data_start + (i * len(TYRE_SET_DATA_FORMAT))
+        end_index = start_index + len(TYRE_SET_DATA_FORMAT)
+        tyre_set_data = unpacked_data[start_index:end_index]
+        tyre_sets_data_array.append(parse_tyre_set_data(tyre_set_data))
+
+    packet_tyre_sets_data_dict = {
+        "m_header": header_dict,
+        "m_carIdx": unpacked_data[12],
+        "m_tyreSetData": tyre_sets_data_array,
+        "m_fittedIdx": unpacked_data[-1],
+    }
+
+    return packet_tyre_sets_data_dict

@@ -29,6 +29,8 @@ def verify_mongodb_setup() -> None:
         "participants",
         "session",
         "car_damage",
+        "final_classification",
+        "tyre_sets"
     ]
     for collection in collections:
         if collection not in db.list_collection_names():
@@ -49,7 +51,9 @@ def run_f1_telemetry_ingest() -> None:
             5: "car_setup",
             6: "car_telemetry",
             7: "car_status",
+            8: "final_classification",
             10: "car_damage",
+            12: "tyre_sets"
         }
         message_type = packet_ids.get(data["m_header"]["m_packetId"], None)
         if message_type is not None:
