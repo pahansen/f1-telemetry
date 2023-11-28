@@ -27,11 +27,12 @@ class Lap(Base):
     __tablename__ = "laps"
 
     session_id = Column(String, primary_key=True)
-    pariticipant_id = Column(String, primary_key=True)
+    participant_id = Column(String, primary_key=True)
     session_time_ms = Column(Float, primary_key=True)
     lap_number = Column(Integer)
     lap_distance = Column(Float)
     last_lap_time_ms = Column(Integer)
+    current_lap_time_ms = Column(Integer)
     sector_1_time_ms = Column(Integer)
     sector_2_time_ms = Column(Integer)
 

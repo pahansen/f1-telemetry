@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker
 from f1_telemetry.session_post_processing.id_enums import Track, SessionType, Weather
 from f1_telemetry.session_post_processing.db.engine import engine
-from f1_telemetry.session_post_processing.db.tables import Base, Session, Participant
+from f1_telemetry.session_post_processing.db.tables import Base, Session, Participant, Lap
 
 load_dotenv()
 
@@ -90,9 +90,46 @@ def ingest_participants(ingested_session_ids):
     db_session.close()
 
     return ingested_participants
+
+def ingest_laps(ingested_participants):
+    db_session = DBSession()
+    db = mongo_client.f1
+    for ingested_participant in ingested_participants:
+        session_id = ingested_participant["session_id"]
+        participant_ids = ingested_participant["participant_ids"]
+        lap_docs = db.lap.find(
+            {"m_header.m_sessionUID": session_id}
+        )
+        for lap_doc in lap_docs:
+            laps = []
+            for participant_id in participant_ids:
+                lap = lap_doc["m_lapData"][participant_id]
+                session_time_ms = lap_doc["m_header"]["m_sessionTime"]
+                lap_number = lap["m_currentLapNum"]
+                lap_distance = lap["m_lapDistance"]
+                last_lap_time_ms = lap["m_lastLapTimeInMS"]
+                current_lap_time_ms = lap["m_currentLapTimeInMS"]
+                sector_1_time_ms = lap["m_sector1TimeInMS"]
+                sector_2_time_ms = lap["m_sector2TimeInMS"]
+                lap = Lap(
+                    session_id=session_id,
+                    participant_id=participant_id,
+                    session_time_ms=session_time_ms,
+                    lap_number=lap_number,
+                    lap_distance=lap_distance,
+                    last_lap_time_ms=last_lap_time_ms,
+                    current_lap_time_ms=current_lap_time_ms,
+                    sector_1_time_ms=sector_1_time_ms,
+                    sector_2_time_ms=sector_2_time_ms,
+                )
+                laps.append(lap)
+            db_session.add_all(laps)
+            db_session.commit()
+    db_session.close()
     
 
 if __name__ == "__main__":
     ingested_session_ids = ingest_sessions()
     ingested_participants = ingest_participants(ingested_session_ids)
+    ingest_laps(ingested_participants)
 
