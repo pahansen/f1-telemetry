@@ -4,11 +4,12 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker
 from f1_telemetry.session_post_processing.id_enums import Track, SessionType, Weather
 from f1_telemetry.session_post_processing.db.engine import engine
-from f1_telemetry.session_post_processing.db.tables import Base, Session
+from f1_telemetry.session_post_processing.db.tables import Base, Session, Participant
 
 load_dotenv()
 
 Base.metadata.create_all(engine)
+DBSession = sessionmaker(bind=engine)
 mongo_client = pymongo.MongoClient(os.getenv("MONGODB_CONNECTION_STRING"))
 
 def ingest_sessions():
@@ -24,7 +25,6 @@ def ingest_sessions():
 
     # insert session into db
     ingested_sessions_ids = []
-    DBSession = sessionmaker(bind=engine)
     db_session = DBSession()
     existing_sessions = db_session.query(Session).distinct("id").all()
     # remove existing sessions from sessions list
@@ -58,6 +58,41 @@ def ingest_sessions():
 
     return ingested_sessions_ids
 
+def ingest_participants(ingested_session_ids):
+    db_session = DBSession()
+    db = mongo_client.f1
+    ingested_participants = []
+    for session_id in ingested_session_ids:
+        participant_doc = db.participants.find_one(
+                {"m_header.m_sessionUID": session_id})
+        participants = []
+        participant_ids = []
+        for index, participant in enumerate(participant_doc["m_participants"]):
+            if participant["m_aiControlled"] == 0 and (participant["m_networkId"] != 255 or index == participant_doc["m_header"]["m_playerCarIndex"]):
+                participant_ids.append(index)
+                participant_id = index
+                name = participant["m_name"]
+                network_id = participant["m_networkId"]
+                your_telemetry = participant["m_yourTelemetry"]
+                show_online_name = participant["m_showOnlineNames"]
+                participant = Participant(
+                    session_id=session_id,
+                    participant_id=participant_id,
+                    name=name,
+                    network_id=network_id,
+                    your_telemetry=your_telemetry,
+                    show_online_name=show_online_name,
+                )
+                participants.append(participant)
+        db_session.add_all(participants)
+        db_session.commit()
+        ingested_participants.append({"session_id": session_id, "participant_ids": participant_ids})
+    db_session.close()
+
+    return ingested_participants
+    
+
 if __name__ == "__main__":
     ingested_session_ids = ingest_sessions()
+    ingested_participants = ingest_participants(ingested_session_ids)
 
