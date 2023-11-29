@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker
 from f1_telemetry.session_post_processing.id_enums import Track, SessionType, Weather
 from f1_telemetry.session_post_processing.db.engine import engine
-from f1_telemetry.session_post_processing.db.tables import Base, Session, Participant, Lap
+from f1_telemetry.session_post_processing.db.tables import Base, Session, Participant, Lap, CarTelemetry
 
 load_dotenv()
 
@@ -126,10 +126,86 @@ def ingest_laps(ingested_participants):
             db_session.add_all(laps)
             db_session.commit()
     db_session.close()
+
+def ingest_car_telemetry(ingested_participants):
+    db_session = DBSession()
+    db = mongo_client.f1
+    for ingested_participant in ingested_participants:
+        session_id = ingested_participant["session_id"]
+        participant_ids = ingested_participant["participant_ids"]
+        car_telemetry_docs = db.car_telemetry.find(
+            {"m_header.m_sessionUID": session_id}
+        )
+        for car_telemetry_doc in car_telemetry_docs:
+            car_telemetry_data = []
+            for participant_id in participant_ids:
+                car_telemetry = car_telemetry_doc["m_carTelemetryData"][participant_id]
+                session_time_ms = car_telemetry_doc["m_header"]["m_sessionTime"]
+                speed = car_telemetry["m_speed"]
+                throttle = car_telemetry["m_throttle"]
+                steer = car_telemetry["m_steer"]
+                brake = car_telemetry["m_brake"]
+                gear = car_telemetry["m_gear"]
+                brakes_temperature_rl = car_telemetry["m_brakesTemperatureRL"]
+                brakes_temperature_rr = car_telemetry["m_brakesTemperatureRR"]
+                brakes_temperature_fl = car_telemetry["m_brakesTemperatureFL"]
+                brakes_temperature_fr = car_telemetry["m_brakesTemperatureFR"]
+                tyres_surface_temperature_rl = car_telemetry["m_tyresSurfaceTemperatureRL"]
+                tyres_surface_temperature_rr = car_telemetry["m_tyresSurfaceTemperatureRR"]
+                tyres_surface_temperature_fl = car_telemetry["m_tyresSurfaceTemperatureFL"]
+                tyres_surface_temperature_fr = car_telemetry["m_tyresSurfaceTemperatureFR"]
+                tyres_inner_temperature_rl = car_telemetry["m_tyresInnerTemperatureRL"]
+                tyres_inner_temperature_rr = car_telemetry["m_tyresInnerTemperatureRR"]
+                tyres_inner_temperature_fl = car_telemetry["m_tyresInnerTemperatureFL"]
+                tyres_inner_temperature_fr = car_telemetry["m_tyresInnerTemperatureFR"]
+                tyres_pressure_rl = car_telemetry["m_tyresPressureRL"]
+                tyres_pressure_rr = car_telemetry["m_tyresPressureRR"]
+                tyres_pressure_fl = car_telemetry["m_tyresPressureFL"]
+                tyres_pressure_fr = car_telemetry["m_tyresPressureFR"]
+                tyres_surface_type_rl = car_telemetry["m_surfaceTypeRL"]
+                tyres_surface_type_rr = car_telemetry["m_surfaceTypeRR"]
+                tyres_surface_type_fl = car_telemetry["m_surfaceTypeFL"]
+                tyres_surface_type_fr = car_telemetry["m_surfaceTypeFR"]
+
+                car_telemetry = CarTelemetry(
+                    session_id=session_id,
+                    participant_id=participant_id,
+                    session_time_ms=session_time_ms,
+                    speed=speed,
+                    throttle=throttle,
+                    steer=steer,
+                    brake=brake,
+                    gear=gear,
+                    brakes_temperature_rl=brakes_temperature_rl,
+                    brakes_temperature_rr=brakes_temperature_rr,
+                    brakes_temperature_fl=brakes_temperature_fl,
+                    brakes_temperature_fr=brakes_temperature_fr,
+                    tyres_surface_temperature_rl=tyres_surface_temperature_rl,
+                    tyres_surface_temperature_rr=tyres_surface_temperature_rr,
+                    tyres_surface_temperature_fl=tyres_surface_temperature_fl,
+                    tyres_surface_temperature_fr=tyres_surface_temperature_fr,
+                    tyres_inner_temperature_rl=tyres_inner_temperature_rl,
+                    tyres_inner_temperature_rr=tyres_inner_temperature_rr,
+                    tyres_inner_temperature_fl=tyres_inner_temperature_fl,
+                    tyres_inner_temperature_fr=tyres_inner_temperature_fr,
+                    tyres_pressure_rl=tyres_pressure_rl,
+                    tyres_pressure_rr=tyres_pressure_rr,
+                    tyres_pressure_fl=tyres_pressure_fl,
+                    tyres_pressure_fr=tyres_pressure_fr,
+                    tyres_surface_type_rl=tyres_surface_type_rl,
+                    tyres_surface_type_rr=tyres_surface_type_rr,
+                    tyres_surface_type_fl=tyres_surface_type_fl,
+                    tyres_surface_type_fr=tyres_surface_type_fr,
+                )
+                car_telemetry_data.append(car_telemetry)
+            db_session.add_all(car_telemetry_data)
+            db_session.commit()
+    db_session.close()
     
 
 if __name__ == "__main__":
     ingested_session_ids = ingest_sessions()
     ingested_participants = ingest_participants(ingested_session_ids)
     ingest_laps(ingested_participants)
+    ingest_car_telemetry(ingested_participants)
 

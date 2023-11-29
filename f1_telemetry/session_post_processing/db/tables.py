@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Integer, String, Float, DateTime
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -12,6 +12,7 @@ class Session(Base):
     track_temperature = Column(Integer)
     air_temperature = Column(Integer)
     track = Column(String)
+    session_datetime = Column(DateTime)
 
 class Participant(Base):
     __tablename__ = "participants"
@@ -26,9 +27,10 @@ class Participant(Base):
 class Lap(Base):
     __tablename__ = "laps"
 
-    session_id = Column(String, primary_key=True)
-    participant_id = Column(String, primary_key=True)
-    session_time_ms = Column(Float, primary_key=True)
+    row_id = Column(Integer, primary_key=True)
+    session_id = Column(String)
+    participant_id = Column(String)
+    session_time_ms = Column(Float)
     lap_number = Column(Integer)
     lap_distance = Column(Float)
     last_lap_time_ms = Column(Integer)
@@ -39,9 +41,10 @@ class Lap(Base):
 class CarTelemetry(Base):
     __tablename__ = "car_telemetry"
 
-    session_id = Column(String, primary_key=True)
-    participant_id = Column(String, primary_key=True)
-    session_time_ms = Column(Float, primary_key=True)
+    row_id = Column(Integer, primary_key=True)
+    session_id = Column(String)
+    participant_id = Column(String)
+    session_time_ms = Column(Float)
     speed = Column(Float)
     throttle = Column(Float)
     steer = Column(Float)
