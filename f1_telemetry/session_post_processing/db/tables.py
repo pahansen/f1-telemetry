@@ -3,6 +3,7 @@ from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
 
+
 class Session(Base):
     __tablename__ = "sessions"
 
@@ -14,6 +15,7 @@ class Session(Base):
     track = Column(String)
     session_datetime = Column(DateTime)
 
+
 class Participant(Base):
     __tablename__ = "participants"
 
@@ -23,6 +25,7 @@ class Participant(Base):
     network_id = Column(String)
     your_telemetry = Column(Integer)
     show_online_name = Column(Integer)
+
 
 class Lap(Base):
     __tablename__ = "laps"
@@ -37,6 +40,7 @@ class Lap(Base):
     current_lap_time_ms = Column(Integer)
     sector_1_time_ms = Column(Integer)
     sector_2_time_ms = Column(Integer)
+
 
 class CarTelemetry(Base):
     __tablename__ = "car_telemetry"

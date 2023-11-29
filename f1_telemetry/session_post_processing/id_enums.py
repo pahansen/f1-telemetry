@@ -37,6 +37,7 @@ class Track(Enum):
     Las_Vegas = 31
     Losail = 32
 
+
 class SessionType(Enum):
     Unknown = 0
     P1 = 1
@@ -53,6 +54,7 @@ class SessionType(Enum):
     R3 = 12
     Time_Trial = 13
 
+
 class Weather(Enum):
     Clear = 0
     Light_Cloud = 1
@@ -60,6 +62,7 @@ class Weather(Enum):
     Light_Rain = 3
     Heavy_Rain = 4
     Storm = 5
+
 
 class SurfaceType(Enum):
     Tarmac = 0

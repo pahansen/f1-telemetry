@@ -4,13 +4,20 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import sessionmaker
 from f1_telemetry.session_post_processing.id_enums import Track, SessionType, Weather
 from f1_telemetry.session_post_processing.db.engine import engine
-from f1_telemetry.session_post_processing.db.tables import Base, Session, Participant, Lap, CarTelemetry
+from f1_telemetry.session_post_processing.db.tables import (
+    Base,
+    Session,
+    Participant,
+    Lap,
+    CarTelemetry,
+)
 
 load_dotenv()
 
 Base.metadata.create_all(engine)
 DBSession = sessionmaker(bind=engine)
 mongo_client = pymongo.MongoClient(os.getenv("MONGODB_CONNECTION_STRING"))
+
 
 def ingest_sessions():
     db = mongo_client.f1
@@ -53,10 +60,11 @@ def ingest_sessions():
                 db_session.add(session)
                 db_session.commit()
                 ingested_sessions_ids.append(session_id)
-    
+
     db_session.close()
 
     return ingested_sessions_ids
+
 
 def ingest_participants(ingested_session_ids):
     db_session = DBSession()
@@ -64,11 +72,15 @@ def ingest_participants(ingested_session_ids):
     ingested_participants = []
     for session_id in ingested_session_ids:
         participant_doc = db.participants.find_one(
-                {"m_header.m_sessionUID": session_id})
+            {"m_header.m_sessionUID": session_id}
+        )
         participants = []
         participant_ids = []
         for index, participant in enumerate(participant_doc["m_participants"]):
-            if participant["m_aiControlled"] == 0 and (participant["m_networkId"] != 255 or index == participant_doc["m_header"]["m_playerCarIndex"]):
+            if participant["m_aiControlled"] == 0 and (
+                participant["m_networkId"] != 255
+                or index == participant_doc["m_header"]["m_playerCarIndex"]
+            ):
                 participant_ids.append(index)
                 participant_id = index
                 name = participant["m_name"]
@@ -86,10 +98,13 @@ def ingest_participants(ingested_session_ids):
                 participants.append(participant)
         db_session.add_all(participants)
         db_session.commit()
-        ingested_participants.append({"session_id": session_id, "participant_ids": participant_ids})
+        ingested_participants.append(
+            {"session_id": session_id, "participant_ids": participant_ids}
+        )
     db_session.close()
 
     return ingested_participants
+
 
 def ingest_laps(ingested_participants):
     db_session = DBSession()
@@ -97,9 +112,7 @@ def ingest_laps(ingested_participants):
     for ingested_participant in ingested_participants:
         session_id = ingested_participant["session_id"]
         participant_ids = ingested_participant["participant_ids"]
-        lap_docs = db.lap.find(
-            {"m_header.m_sessionUID": session_id}
-        )
+        lap_docs = db.lap.find({"m_header.m_sessionUID": session_id})
         for lap_doc in lap_docs:
             laps = []
             for participant_id in participant_ids:
@@ -127,6 +140,7 @@ def ingest_laps(ingested_participants):
             db_session.commit()
     db_session.close()
 
+
 def ingest_car_telemetry(ingested_participants):
     db_session = DBSession()
     db = mongo_client.f1
@@ -150,10 +164,18 @@ def ingest_car_telemetry(ingested_participants):
                 brakes_temperature_rr = car_telemetry["m_brakesTemperatureRR"]
                 brakes_temperature_fl = car_telemetry["m_brakesTemperatureFL"]
                 brakes_temperature_fr = car_telemetry["m_brakesTemperatureFR"]
-                tyres_surface_temperature_rl = car_telemetry["m_tyresSurfaceTemperatureRL"]
-                tyres_surface_temperature_rr = car_telemetry["m_tyresSurfaceTemperatureRR"]
-                tyres_surface_temperature_fl = car_telemetry["m_tyresSurfaceTemperatureFL"]
-                tyres_surface_temperature_fr = car_telemetry["m_tyresSurfaceTemperatureFR"]
+                tyres_surface_temperature_rl = car_telemetry[
+                    "m_tyresSurfaceTemperatureRL"
+                ]
+                tyres_surface_temperature_rr = car_telemetry[
+                    "m_tyresSurfaceTemperatureRR"
+                ]
+                tyres_surface_temperature_fl = car_telemetry[
+                    "m_tyresSurfaceTemperatureFL"
+                ]
+                tyres_surface_temperature_fr = car_telemetry[
+                    "m_tyresSurfaceTemperatureFR"
+                ]
                 tyres_inner_temperature_rl = car_telemetry["m_tyresInnerTemperatureRL"]
                 tyres_inner_temperature_rr = car_telemetry["m_tyresInnerTemperatureRR"]
                 tyres_inner_temperature_fl = car_telemetry["m_tyresInnerTemperatureFL"]
@@ -201,11 +223,10 @@ def ingest_car_telemetry(ingested_participants):
             db_session.add_all(car_telemetry_data)
             db_session.commit()
     db_session.close()
-    
+
 
 if __name__ == "__main__":
     ingested_session_ids = ingest_sessions()
     ingested_participants = ingest_participants(ingested_session_ids)
     ingest_laps(ingested_participants)
     ingest_car_telemetry(ingested_participants)
-

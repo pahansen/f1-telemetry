@@ -10,7 +10,7 @@ url = URL.create(
     username=os.getenv("POSTGRES_USER"),
     password=os.getenv("POSTGRES_PASSWORD"),
     host=os.getenv("POSTGRES_HOST"),
-    database="postgres"
+    database="postgres",
 )
 
 engine = create_engine(url)
