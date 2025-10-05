@@ -1,6 +1,5 @@
 import struct
 from dataclasses import dataclass
-from typing import Any, Dict, Type
 
 from f1_telemetry.parsers.packet_header import PacketHeader
 

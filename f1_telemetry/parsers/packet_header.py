@@ -1,7 +1,5 @@
 import struct
 from dataclasses import dataclass
-from typing import Any, Dict, Type
-
 @dataclass
 class PacketHeader:
     m_packetFormat: int

@@ -4,37 +4,45 @@ from typing import Dict, Type, Any
 import json
 import time
 import argparse
-from dataclasses import dataclass, asdict, is_dataclass
+from dataclasses import asdict, is_dataclass
 
 from f1_telemetry.parsers.packet_header import PacketHeader
 from f1_telemetry.parsers.car_telemetry_data import PacketCarTelemetryData
+from f1_telemetry.parsers.motion_data import PacketMotionData
+
 
 PACKET_PARSERS: Dict[int, Type] = {
+    0: PacketMotionData,
     6: PacketCarTelemetryData,
-    # Add other IDs (0–14) here as you implement them
 }
+
 
 def parse_packet(buffer: bytes) -> Any:
     """Parses a raw F1 UDP packet into a Python dataclass."""
     header = PacketHeader.from_buffer(buffer)
     parser_cls = PACKET_PARSERS.get(header.m_packetId)
     if not parser_cls:
-        raise ValueError(f"Unsupported packet type ID {header.m_packetId}")
+        return None
     return parser_cls.from_buffer(buffer)
 
 
 def dataclass_to_dict(obj: Any) -> Any:
-    """Recursively converts dataclasses (and lists of them) to JSON-safe dicts."""
+    """Recursively converts dataclasses (and their contents) into JSON-safe dicts."""
     if is_dataclass(obj):
         return {k: dataclass_to_dict(v) for k, v in asdict(obj).items()}
+    elif isinstance(obj, dict):
+        return {k: dataclass_to_dict(v) for k, v in obj.items()}
     elif isinstance(obj, (list, tuple)):
         return [dataclass_to_dict(v) for v in obj]
     elif isinstance(obj, (int, float, str, bool)) or obj is None:
         return obj
     else:
-        return str(obj)  # fallback for anything unexpected
+        # Fallback for unexpected types (e.g., enums)
+        return str(obj)
+
 
 def start_udp_listener(ip: str, port: int, output_path: str):
+    """Listens to the F1 UDP stream and logs all data dynamically."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((ip, port))
     sock.settimeout(0.5)
@@ -57,7 +65,6 @@ def start_udp_listener(ip: str, port: int, output_path: str):
             if not packet:
                 continue
 
-            # Dynamic record
             timestamp = time.time() - start_time
             record = {
                 "timestamp": timestamp,
@@ -65,9 +72,6 @@ def start_udp_listener(ip: str, port: int, output_path: str):
                 "data": dataclass_to_dict(packet)
             }
             logs.append(record)
-
-            # Minimal console output (optional)
-            print(f"[{timestamp:6.2f}s] Received {packet.__class__.__name__}")
 
     except KeyboardInterrupt:
         print("\n🛑 Listener stopped by user.")
@@ -80,23 +84,25 @@ def start_udp_listener(ip: str, port: int, output_path: str):
         print(f"💾 Saved {len(logs)} packets to {output_path}")
 
 
+def prompt_with_default(prompt_text: str, default_value: str) -> str:
+    """Prompt user with a default value shown in brackets."""
+    user_input = input(f"{prompt_text} [{default_value}]: ").strip()
+    return user_input if user_input else default_value
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="F1 UDP Telemetry CLI Listener"
     )
-    parser.add_argument(
-        "--ip", type=str, default="127.0.0.1", help="IP address to bind to (default: 127.0.0.1)"
-    )
-    parser.add_argument(
-        "--port", type=int, default=20777, help="UDP port to listen on (default: 20777)"
-    )
-    parser.add_argument(
-        "--output",
-        type=str,
-        default="telemetry_log.json",
-        help="Output file path for telemetry log (default: telemetry_log.json)",
-    )
+    parser.add_argument("--ip", type=str, help="IP address to bind to (default: 127.0.0.1)")
+    parser.add_argument("--port", type=int, help="UDP port to listen on (default: 20777)")
+    parser.add_argument("--output", type=str, help="Output file path (default: telemetry_log.json)")
 
     args = parser.parse_args()
-    start_udp_listener(args.ip, args.port, args.output)
 
+    # Interactive fallbacks
+    ip = args.ip or prompt_with_default("Enter IP", "127.0.0.1")
+    port = args.port or int(prompt_with_default("Enter port", "20777"))
+    output_path = args.output or prompt_with_default("Enter output path", "telemetry_log.json")
+
+    start_udp_listener(ip, port, output_path)
