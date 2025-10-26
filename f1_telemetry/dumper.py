@@ -9,9 +9,11 @@ from f1_telemetry.parsers.car_telemetry_data import PacketCarTelemetryData
 from f1_telemetry.parsers.motion_data import PacketMotionData
 from f1_telemetry.parsers.lap_data import PacketLapData
 from f1_telemetry.parsers.participant_data import PacketParticipantsData
+from f1_telemetry.parsers.session_data import PacketSessionData
 
 PACKET_PARSERS: Dict[int, Type] = {
     0: PacketMotionData,
+    1: PacketSessionData,
     2: PacketLapData,
     4: PacketParticipantsData,
     6: PacketCarTelemetryData
