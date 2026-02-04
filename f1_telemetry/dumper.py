@@ -7,6 +7,7 @@ from dataclasses import asdict, is_dataclass
 
 from f1_telemetry.parsers.packet_header import PacketHeader
 from f1_telemetry.parsers.car_telemetry_data import PacketCarTelemetryData
+from f1_telemetry.parsers.car_status_data import PacketCarStatusData
 from f1_telemetry.parsers.motion_data import PacketMotionData
 from f1_telemetry.parsers.lap_data import PacketLapData
 from f1_telemetry.parsers.participant_data import PacketParticipantsData
@@ -19,6 +20,7 @@ PACKET_PARSERS: Dict[int, Type] = {
     2: PacketLapData,
     4: PacketParticipantsData,
     6: PacketCarTelemetryData,
+    7: PacketCarStatusData,
     8: PacketFinalClassificationData
 }
 
