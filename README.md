@@ -19,7 +19,7 @@ uv sync
 
 ## Usage
 
-The CLI provides two main commands: `record` and `dump`.
+The CLI provides three main commands: `record`, `dump`, and `visualize`.
 
 ### Record Telemetry
 
@@ -48,6 +48,24 @@ uv run python -m f1_telemetry.main dump ./recordings/telemetry_2024-01-15_14-30-
 ```
 
 This creates a JSON file with the same name (e.g., `telemetry_2024-01-15_14-30-00.json`).
+
+### Visualize Telemetry
+
+> **Note:** This is a rudimentary visualization built with matplotlib and basic button navigation. It's intended for quick data inspection rather than detailed analysis.
+
+View telemetry traces in an interactive chart window.
+
+```bash
+# Launch visualization for a JSON telemetry file
+uv run python -m f1_telemetry.main visualize ./recordings/telemetry_2024-01-15_14-30-00.json
+```
+
+The visualization displays three stacked charts:
+- **Throttle & Brake** - throttle (green) and brake (red) inputs as percentages
+- **Steering** - steering input from -100% (left) to +100% (right)
+- **Speed** - car speed in km/h
+
+Use the navigation buttons at the bottom of the window to cycle through drivers and laps.
 
 ## F1 Game Setup
 
