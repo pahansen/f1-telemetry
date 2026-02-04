@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "f1-telemetry"
 version = "0.1.0"
@@ -7,3 +11,6 @@ requires-python = ">=3.13"
 dependencies = [
     "typer>=0.21.1",
 ]
+
+[project.scripts]
+f1-telemetry = "f1_telemetry.main:app"

@@ -54,6 +54,7 @@ parsers/*.py (struct unpacking → dataclasses)
 - All packets use little-endian encoding
 - Packet header (24 bytes) present in all packets - parsed first to get `packet_id` for dispatch
 - Each parser handles fixed arrays (e.g., 4 wheel temps, 22 cars)
+- The file ./logs/F1_24_Telemetry_Output_Structures.txt shows a specification for all packages. Always refer this file when working on parser code
 
 ## Environment Variables
 
