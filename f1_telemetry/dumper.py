@@ -1,7 +1,8 @@
 """Handles the parsing of F1 telemetry data packets. Reads raw byte data and converts it into structured dataclasses."""
+import os
 import struct
 import json
-from typing import Any, Dict, Type
+from typing import Any, Callable, Dict, Type
 from dataclasses import asdict, is_dataclass
 
 from f1_telemetry.parsers.packet_header import PacketHeader
@@ -43,9 +44,22 @@ def dataclass_to_dict(obj: Any) -> Any:
         # Fallback for unexpected types (e.g., enums)
         return str(obj)
 
-def dump_binary_log(file_path: str) -> list[bytes]:
-    """Reads a binary log file and extracts individual packets."""
+def parse_binary_log(
+    file_path: str,
+    progress_callback: Callable[[int, int], None] | None = None,
+) -> list[dict]:
+    """Reads a binary log file and extracts individual packets.
+
+    Args:
+        file_path: Path to the binary log file.
+        progress_callback: Optional callback(bytes_read, total_bytes) for progress updates.
+
+    Returns:
+        List of parsed packet records.
+    """
     logs = []
+    file_size = os.path.getsize(file_path)
+    bytes_read = 0
 
     with open(file_path, "rb") as f:
         while True:
@@ -60,6 +74,10 @@ def dump_binary_log(file_path: str) -> list[bytes]:
             if not data:
                 break  # Corrupt or incomplete file
 
+            bytes_read += 2 + packet_size
+            if progress_callback:
+                progress_callback(bytes_read, file_size)
+
             # Parse packet using your existing logic
             packet = parse_packet(data)
             if not packet:
@@ -72,5 +90,43 @@ def dump_binary_log(file_path: str) -> list[bytes]:
             }
             logs.append(record)
 
-    with open(file_path.replace(".bin", ".json"), "w") as f:
-        json.dump(logs, f, indent=4)
+    return logs
+
+
+def write_json_log(
+    logs: list[dict],
+    output_path: str,
+    progress_callback: Callable[[int, int], None] | None = None,
+) -> None:
+    """Writes parsed logs to a JSON file with progress tracking.
+
+    Args:
+        logs: List of parsed packet records.
+        output_path: Path to write the JSON file.
+        progress_callback: Optional callback(records_written, total_records) for progress updates.
+    """
+    total = len(logs)
+    with open(output_path, "w") as f:
+        f.write("[\n")
+        for i, record in enumerate(logs):
+            json_str = json.dumps(record, indent=4)
+            # Indent each line of the JSON object
+            indented = "\n".join("    " + line for line in json_str.split("\n"))
+            f.write(indented)
+            if i < total - 1:
+                f.write(",")
+            f.write("\n")
+            if progress_callback:
+                progress_callback(i + 1, total)
+        f.write("]\n")
+
+
+def dump_binary_log(
+    file_path: str,
+    progress_callback: Callable[[int, int], None] | None = None,
+) -> list[dict]:
+    """Reads a binary log file and writes to JSON. Legacy function for backwards compatibility."""
+    logs = parse_binary_log(file_path, progress_callback)
+    output_path = file_path.replace(".bin", ".json")
+    write_json_log(logs, output_path)
+    return logs
