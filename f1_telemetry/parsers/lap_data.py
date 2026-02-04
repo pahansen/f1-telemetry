@@ -41,8 +41,7 @@ class LapData:
     m_speedTrapFastestLap: int
 
     # ✅ Correct struct format (34 values)
-    _struct = struct.Struct("<IIHBHBHBHBfffBBBBBBBBBBBBBBBHHBfB"            
-    )
+    _struct = struct.Struct("<IIHBHBHBHBfffBBBBBBBBBBBBBBBHHBfB")
 
     @classmethod
     def from_buffer(cls, buffer: bytes, offset: int = 0):
@@ -68,6 +67,8 @@ class PacketLapData:
             lap_data_list.append(lap)
             offset += LapData._struct.size
 
-        m_timeTrialPBCarIdx, m_timeTrialRivalCarIdx = struct.unpack_from("<BB", buffer, offset)
+        m_timeTrialPBCarIdx, m_timeTrialRivalCarIdx = struct.unpack_from(
+            "<BB", buffer, offset
+        )
 
         return cls(header, lap_data_list, m_timeTrialPBCarIdx, m_timeTrialRivalCarIdx)

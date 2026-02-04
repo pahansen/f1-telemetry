@@ -1,4 +1,5 @@
 """F1 UDP Telemetry CLI Tool."""
+
 import os
 from typing import Annotated
 

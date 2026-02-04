@@ -1,5 +1,7 @@
 import struct
 from dataclasses import dataclass
+
+
 @dataclass
 class PacketHeader:
     m_packetFormat: int

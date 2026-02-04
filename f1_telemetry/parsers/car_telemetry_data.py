@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from f1_telemetry.parsers.packet_header import PacketHeader
 
+
 @dataclass
 class CarTelemetryData:
     m_speed: int
@@ -66,6 +67,8 @@ class PacketCarTelemetryData:
             cars.append(car)
             offset += CarTelemetryData._struct.size
 
-        mfd_panel, mfd_secondary, suggested_gear = struct.unpack_from("<BBb", buffer, offset)
+        mfd_panel, mfd_secondary, suggested_gear = struct.unpack_from(
+            "<BBb", buffer, offset
+        )
 
         return cls(header, cars, mfd_panel, mfd_secondary, suggested_gear)

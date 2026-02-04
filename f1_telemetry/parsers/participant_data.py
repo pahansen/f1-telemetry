@@ -26,7 +26,7 @@ class ParticipantData:
     @classmethod
     def from_buffer(cls, buffer: bytes, offset: int):
         unpacked = cls._struct.unpack_from(buffer, offset)
-        name = unpacked[7].split(b'\x00', 1)[0].decode("utf-8", errors="replace")
+        name = unpacked[7].split(b"\x00", 1)[0].decode("utf-8", errors="replace")
 
         return cls(
             m_aiControlled=unpacked[0],
@@ -62,4 +62,3 @@ class PacketParticipantsData:
             offset += ParticipantData._struct.size - 1
 
         return cls(header, num_active_cars, participants)
-

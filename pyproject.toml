@@ -14,3 +14,8 @@ dependencies = [
 
 [project.scripts]
 f1-telemetry = "f1_telemetry.main:app"
+
+[dependency-groups]
+dev = [
+    "black>=26.1.0",
+]

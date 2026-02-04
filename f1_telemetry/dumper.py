@@ -1,4 +1,5 @@
 """Handles the parsing of F1 telemetry data packets. Reads raw byte data and converts it into structured dataclasses."""
+
 import os
 import struct
 import json
@@ -21,8 +22,9 @@ PACKET_PARSERS: Dict[int, Type] = {
     4: PacketParticipantsData,
     6: PacketCarTelemetryData,
     7: PacketCarStatusData,
-    8: PacketFinalClassificationData
+    8: PacketFinalClassificationData,
 }
+
 
 def parse_packet(buffer: bytes) -> Any:
     """Parses a raw F1 UDP packet into a Python dataclass."""
@@ -31,6 +33,7 @@ def parse_packet(buffer: bytes) -> Any:
     if not parser_cls:
         return None
     return parser_cls.from_buffer(buffer)
+
 
 def dataclass_to_dict(obj: Any) -> Any:
     """Recursively converts dataclasses (and their contents) into JSON-safe dicts."""
@@ -45,6 +48,7 @@ def dataclass_to_dict(obj: Any) -> Any:
     else:
         # Fallback for unexpected types (e.g., enums)
         return str(obj)
+
 
 def parse_binary_log(
     file_path: str,
@@ -70,7 +74,7 @@ def parse_binary_log(
             if not size_bytes:
                 break  # End of file
 
-            packet_size = struct.unpack('>H', size_bytes)[0]
+            packet_size = struct.unpack(">H", size_bytes)[0]
             data = f.read(packet_size)
 
             if not data:
@@ -88,7 +92,7 @@ def parse_binary_log(
             # Build same dict structure you use in live mode
             record = {
                 "packetType": packet.__class__.__name__,
-                "data": dataclass_to_dict(packet)
+                "data": dataclass_to_dict(packet),
             }
             logs.append(record)
 

@@ -17,7 +17,7 @@ class MarshalZone:
     _struct = struct.Struct("<fb")
 
     @classmethod
-    def from_buffer(cls, buffer: bytes, offset: int = 0) -> 'MarshalZone':
+    def from_buffer(cls, buffer: bytes, offset: int = 0) -> "MarshalZone":
         unpacked = cls._struct.unpack_from(buffer, offset)
         return cls(*unpacked)
 
@@ -36,7 +36,7 @@ class WeatherForecastSample:
     _struct = struct.Struct("<BBBbbbbB")
 
     @classmethod
-    def from_buffer(cls, buffer: bytes, offset: int = 0) -> 'WeatherForecastSample':
+    def from_buffer(cls, buffer: bytes, offset: int = 0) -> "WeatherForecastSample":
         unpacked = cls._struct.unpack_from(buffer, offset)
         return cls(*unpacked)
 
@@ -123,28 +123,30 @@ class PacketSessionData:
     m_sector3LapDistanceStart: float
 
     @classmethod
-    def from_buffer(cls, buffer: bytes) -> 'PacketSessionData':
+    def from_buffer(cls, buffer: bytes) -> "PacketSessionData":
         offset = 0
         m_header = PacketHeader.from_buffer(buffer, offset)
         offset += PacketHeader._struct.size
 
         fmt1 = "<BbbBHBbBHHBBBBBB"
-        (m_weather,
-         m_trackTemperature,
-         m_airTemperature,
-         m_totalLaps,
-         m_trackLength,
-         m_sessionType,
-         m_trackId,
-         m_formula,
-         m_sessionTimeLeft,
-         m_sessionDuration,
-         m_pitSpeedLimit,
-         m_gamePaused,
-         m_isSpectating,
-         m_spectatorCarIndex,
-         m_sliProNativeSupport,
-         m_numMarshalZones) = struct.unpack_from(fmt1, buffer, offset)
+        (
+            m_weather,
+            m_trackTemperature,
+            m_airTemperature,
+            m_totalLaps,
+            m_trackLength,
+            m_sessionType,
+            m_trackId,
+            m_formula,
+            m_sessionTimeLeft,
+            m_sessionDuration,
+            m_pitSpeedLimit,
+            m_gamePaused,
+            m_isSpectating,
+            m_spectatorCarIndex,
+            m_sliProNativeSupport,
+            m_numMarshalZones,
+        ) = struct.unpack_from(fmt1, buffer, offset)
         offset += struct.calcsize(fmt1)
 
         m_marshalZones = []
@@ -152,9 +154,13 @@ class PacketSessionData:
             mz = MarshalZone.from_buffer(buffer, offset)
             m_marshalZones.append(mz)
             offset += MarshalZone._struct.size
-        offset += (MAX_MARSHALS_ZONE_PER_LAP - m_numMarshalZones) * MarshalZone._struct.size
+        offset += (
+            MAX_MARSHALS_ZONE_PER_LAP - m_numMarshalZones
+        ) * MarshalZone._struct.size
 
-        m_safetyCarStatus, m_networkGame, m_numWeatherForecastSamples = struct.unpack_from("<BBB", buffer, offset)
+        m_safetyCarStatus, m_networkGame, m_numWeatherForecastSamples = (
+            struct.unpack_from("<BBB", buffer, offset)
+        )
         offset += 3
 
         m_weatherForecastSamples = []
@@ -162,69 +168,81 @@ class PacketSessionData:
             ws = WeatherForecastSample.from_buffer(buffer, offset)
             m_weatherForecastSamples.append(ws)
             offset += WeatherForecastSample._struct.size
-        offset += (MAX_WEATHER_FORECAST_SAMPLES - m_numWeatherForecastSamples) * WeatherForecastSample._struct.size
+        offset += (
+            MAX_WEATHER_FORECAST_SAMPLES - m_numWeatherForecastSamples
+        ) * WeatherForecastSample._struct.size
 
         fmt3 = "<BBIII" + ("B" * 14) + "I" + ("B" * 33)
         tail = struct.unpack_from(fmt3, buffer, offset)
 
         idx = 0
-        m_forecastAccuracy = tail[idx]; idx += 1
-        m_aiDifficulty = tail[idx]; idx += 1
-        m_seasonLinkIdentifier = tail[idx]; idx += 1
-        m_weekendLinkIdentifier = tail[idx]; idx += 1
-        m_sessionLinkIdentifier = tail[idx]; idx += 1
+        m_forecastAccuracy = tail[idx]
+        idx += 1
+        m_aiDifficulty = tail[idx]
+        idx += 1
+        m_seasonLinkIdentifier = tail[idx]
+        idx += 1
+        m_weekendLinkIdentifier = tail[idx]
+        idx += 1
+        m_sessionLinkIdentifier = tail[idx]
+        idx += 1
 
-        (m_pitStopWindowIdealLap,
-         m_pitStopWindowLatestLap,
-         m_pitStopRejoinPosition,
-         m_steeringAssist,
-         m_brakingAssist,
-         m_gearboxAssist,
-         m_pitAssist,
-         m_pitReleaseAssist,
-         m_ersAssist,
-         m_drsAssist,
-         m_dynamicRacingLine,
-         m_dynamicRacingLineType,
-         m_gameMode,
-         m_ruleSet) = tail[idx:idx+14]
+        (
+            m_pitStopWindowIdealLap,
+            m_pitStopWindowLatestLap,
+            m_pitStopRejoinPosition,
+            m_steeringAssist,
+            m_brakingAssist,
+            m_gearboxAssist,
+            m_pitAssist,
+            m_pitReleaseAssist,
+            m_ersAssist,
+            m_drsAssist,
+            m_dynamicRacingLine,
+            m_dynamicRacingLineType,
+            m_gameMode,
+            m_ruleSet,
+        ) = tail[idx : idx + 14]
         idx += 14
 
-        m_timeOfDay = tail[idx]; idx += 1
+        m_timeOfDay = tail[idx]
+        idx += 1
 
-        (m_sessionLength,
-         m_speedUnitsLeadPlayer,
-         m_temperatureUnitsLeadPlayer,
-         m_speedUnitsSecondaryPlayer,
-         m_temperatureUnitsSecondaryPlayer,
-         m_numSafetyCarPeriods,
-         m_numVirtualSafetyCarPeriods,
-         m_numRedFlagPeriods,
-         m_equalCarPerformance,
-         m_recoveryMode,
-         m_flashbackLimit,
-         m_surfaceType,
-         m_lowFuelMode,
-         m_raceStarts,
-         m_tyreTemperature,
-         m_pitLaneTyreSim,
-         m_carDamage,
-         m_carDamageRate,
-         m_collisions,
-         m_collisionsOffForFirstLapOnly,
-         m_mpUnsafePitRelease,
-         m_mpOffForGriefing,
-         m_cornerCuttingStringency,
-         m_parcFermeRules,
-         m_pitStopExperience,
-         m_safetyCar,
-         m_safetyCarExperience,
-         m_formationLap,
-         m_formationLapExperience,
-         m_redFlags,
-         m_affectsLicenceLevelSolo,
-         m_affectsLicenceLevelMP,
-         m_numSessionsInWeekend) = tail[idx:idx+33]
+        (
+            m_sessionLength,
+            m_speedUnitsLeadPlayer,
+            m_temperatureUnitsLeadPlayer,
+            m_speedUnitsSecondaryPlayer,
+            m_temperatureUnitsSecondaryPlayer,
+            m_numSafetyCarPeriods,
+            m_numVirtualSafetyCarPeriods,
+            m_numRedFlagPeriods,
+            m_equalCarPerformance,
+            m_recoveryMode,
+            m_flashbackLimit,
+            m_surfaceType,
+            m_lowFuelMode,
+            m_raceStarts,
+            m_tyreTemperature,
+            m_pitLaneTyreSim,
+            m_carDamage,
+            m_carDamageRate,
+            m_collisions,
+            m_collisionsOffForFirstLapOnly,
+            m_mpUnsafePitRelease,
+            m_mpOffForGriefing,
+            m_cornerCuttingStringency,
+            m_parcFermeRules,
+            m_pitStopExperience,
+            m_safetyCar,
+            m_safetyCarExperience,
+            m_formationLap,
+            m_formationLapExperience,
+            m_redFlags,
+            m_affectsLicenceLevelSolo,
+            m_affectsLicenceLevelMP,
+            m_numSessionsInWeekend,
+        ) = tail[idx : idx + 33]
 
         offset += struct.calcsize(fmt3)
 
@@ -232,7 +250,9 @@ class PacketSessionData:
         m_weekendStructure = m_weekendStructure[:m_numSessionsInWeekend]
         offset += MAX_SESSIONS_IN_WEEKEND
 
-        m_sector2LapDistanceStart, m_sector3LapDistanceStart = struct.unpack_from("<ff", buffer, offset)
+        m_sector2LapDistanceStart, m_sector3LapDistanceStart = struct.unpack_from(
+            "<ff", buffer, offset
+        )
 
         return cls(
             m_header=m_header,
