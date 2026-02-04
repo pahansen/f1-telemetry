@@ -1,21 +1,70 @@
-# Simple Real-Time Telemetry Dashboard for F1 2021
-This project shows an example of how to use the UDP data stream from [F1 2023][1] video game to visualize real-time data by ingesting the data into MongoDB. Additionally, this data can be used for post race performance analysis.
+# F1 Telemetry
 
-Thanks to Codemasters for providing this awesome feature. You can check the forum to see all data that is available from their [F1 2023 UDP Specification][2].
+A CLI tool for capturing and parsing real-time UDP telemetry data from the F1 2024 video game. Record live telemetry to binary files and convert them to structured JSON for analysis.
 
-[1]: https://www.ea.com/de-de/games/f1/f1-23
-[2]: https://answers.ea.com/t5/General-Discussion/F1-23-UDP-Specification/m-p/12633159
+Based on the [F1 24 UDP Specification](https://answers.ea.com/t5/General-Discussion/F1-24-UDP-Specification/td-p/13745220).
 
-## How to run
-Create a .env file inside the project folder and include the necessary env vars.
+## Installation
 
-    ## Defaults from F1 UDP Telemetry
-    F1_UDP_SERVER_ADDRESS=127.0.0.1
-    F1_UDP_SERVER_PORT=20777
+This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
 
-    ## Connection string including credentials for your MongoDB
-    MONGODB_CONNECTION_STRING=mongodb://username:password@127.0.0.1:27017/
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/f1-telemetry.git
+cd f1-telemetry
 
-Once you have installed the requirements from `requirements.txt` run main.py inside the f1_telemetry folder.
+# Install dependencies
+uv sync
+```
 
-    python -m f1_telemetry.main
+## Usage
+
+The CLI provides two main commands: `record` and `dump`.
+
+### Record Telemetry
+
+Capture live UDP telemetry from the F1 game and save to a binary file.
+
+```bash
+# Record with default settings (127.0.0.1:20777)
+uv run python -m f1_telemetry.main record
+
+# Record with custom IP and port
+uv run python -m f1_telemetry.main record --ip 192.168.1.100 --port 20777
+
+# Record to a specific output directory
+uv run python -m f1_telemetry.main record --output-path ./recordings
+```
+
+Press `Ctrl+C` to stop recording. The binary file will be saved with a timestamp (e.g., `telemetry_2024-01-15_14-30-00.bin`).
+
+### Parse to JSON
+
+Convert a recorded binary file to JSON format for analysis.
+
+```bash
+# Parse a binary file to JSON
+uv run python -m f1_telemetry.main dump ./recordings/telemetry_2024-01-15_14-30-00.bin
+```
+
+This creates a JSON file with the same name (e.g., `telemetry_2024-01-15_14-30-00.json`).
+
+## F1 Game Setup
+
+To enable UDP telemetry in F1 2024:
+
+1. Go to **Settings** > **Telemetry Settings**
+2. Set **UDP Telemetry** to **On**
+3. Set **UDP Broadcast Mode** to **Off**
+4. Set **UDP IP Address** to your computer's IP (or `127.0.0.1` for localhost)
+5. Set **UDP Port** to `20777`
+6. Set **UDP Send Rate** to your preferred frequency (e.g., 20Hz)
+
+## Environment Variables
+
+You can also configure defaults via environment variables:
+
+```bash
+export F1_UDP_SERVER_ADDRESS=127.0.0.1
+export F1_UDP_SERVER_PORT=20777
+```
