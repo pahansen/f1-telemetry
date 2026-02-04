@@ -8,6 +8,7 @@ from rich.progress import Progress, BarColumn, TaskProgressColumn, TimeRemaining
 
 from f1_telemetry.recorder import record_binary_telemetry
 from f1_telemetry.dumper import parse_binary_log, write_json_log
+from f1_telemetry.visualizer import visualize_telemetry
 
 app = typer.Typer(help="F1 UDP Telemetry CLI Tool")
 
@@ -51,6 +52,14 @@ def dump(
             progress.update(write_task, completed=records_written)
 
         write_json_log(logs, output_path, progress_callback=update_write_progress)
+
+
+@app.command()
+def visualize(
+    input_path: Annotated[str, typer.Argument(help="Input JSON telemetry file path")],
+):
+    """Visualize telemetry data with interactive driver and lap selection."""
+    visualize_telemetry(input_path)
 
 
 if __name__ == "__main__":
